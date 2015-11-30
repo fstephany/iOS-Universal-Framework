@@ -25,7 +25,7 @@
 			<key>SharedSettings</key>
 			<dict>
 				<key>ARCHS</key>
-				<string>armv6 $(ARCHS_STANDARD_32_BIT)</string>
+				<string>$(ARCHS_STANDARD)</string>
 				<key>WRAPPER_EXTENSION</key>
 				<string>framework</string>
 				<key>FRAMEWORK_VERSION</key>
@@ -33,7 +33,7 @@
 				<key>DYLIB_COMPATIBILITY_VERSION</key>
 				<string>1</string>
 				<key>DYLIB_CURRENT_VERSION</key>
-				<string>1</string>
+				<string>2</string>
 				<key>SKIP_INSTALL</key>
 				<string>YES</string>
 			</dict>
@@ -296,9 +296,9 @@ class Project:
         self.build_full_paths(project_data, splitpath(os.environ['SOURCE_ROOT']))
         return project_data
 
-    def is_key(self, obj):        
+    def is_key(self, obj):
         return isinstance(obj, basestring) and len(obj) == 24 and re.search('^[0-9a-fA-F]+$', obj) is not None
-    
+
     def build_dereference_list(self, all_objects, parent, key, obj):
         deref_list = []
         if self.is_key(obj):
@@ -312,7 +312,7 @@ class Project:
             for item in obj:
                 deref_list += self.build_dereference_list(all_objects, obj, None, item)
         return deref_list
-    
+
     def unpack_objects(self, deref_list):
         for parent, key, orig, obj in deref_list:
             if key is None:
@@ -401,7 +401,7 @@ class Project:
     #
     def get_containing_path(self, node):
         return os.path.join(*node['pathComponents'])
-    
+
     def get_archive_search_paths(self):
         log.info("Search paths = %s" % set([self.get_containing_path(fw) for fw in self.static_frameworks] + [self.get_containing_path(fw) for fw in self.static_libraries]))
         return set([self.get_containing_path(fw) for fw in self.static_frameworks] + [self.get_containing_path(fw) for fw in self.static_libraries])
@@ -628,7 +628,7 @@ def check_for_derived_data_in_search_paths(project):
     search_path_keys = ["FRAMEWORK_SEARCH_PATHS", "LIBRARY_SEARCH_PATHS", "HEADER_SEARCH_PATHS"]
     build_configs = project.target['buildConfigurationList']['buildConfigurations']
     build_settings = filter(lambda x: x['name'] == os.environ['CONFIGURATION'], build_configs)[0]['buildSettings']
-    
+
     found_something = False
     for path_key in filter(lambda x: x in build_settings, search_path_keys):
         path = build_settings[path_key]
@@ -692,7 +692,7 @@ def is_archive_build():
     # its own build dir (not being built as a dependency of another target)
     if archive_build:
         archive_build = os.environ['TARGET_NAME'] in build_dir
-    
+
     return archive_build
 
 # Xcode by default throws all public headers into the top level directory.
@@ -781,7 +781,7 @@ def build_embedded_framework(project):
         ensure_path_exists(embedded_path)
         copy_overwrite(fw_path, os.path.join(embedded_path, fw_name))
 
-    # Create embeddedframework's Resources        
+    # Create embeddedframework's Resources
     ensure_path_exists(os.path.join(embedded_path, "Resources"))
     symlink_source = os.path.join("..", fw_name, "Resources")
     symlink_path = os.path.join(embedded_path, "Resources")
@@ -838,7 +838,7 @@ def run_build():
             project.build_state.persist()
 
     link_local_archs(project)
-    
+
     # Only do a universal binary when building an archive.
     if is_archive_build() and is_master():
         link_combine_all_archs(project)
@@ -849,7 +849,7 @@ def run_build():
         build_deep_header_hierarchy(project)
 
     add_symlinks_to_framework(project)
-    
+
     if is_master():
         if config_framework_type == 'embeddedframework':
             build_embedded_framework(project)
